@@ -2,6 +2,8 @@ using System;
 using Curso.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Curso.Data
 {
@@ -12,11 +14,12 @@ namespace Curso.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            const string strConnection = "Data Source=(localdb)\\mssqllocaldb; Initial Catalog=C002; Integrated Security=true; pooling=true";
+            const string strConnection = "Data Source=(localdb)\\mssqllocaldb; Initial Catalog=CursoDEVIO-02; Integrated Security=true; pooling=true; MultipleActiveResultSets=true;";
 
             optionsBuilder
                 .UseSqlServer(strConnection)
                 .EnableSensitiveDataLogging()
+                //.UseLazyLoadingProxies()
                 .LogTo(Console.WriteLine, LogLevel.Information);
         }
     }
