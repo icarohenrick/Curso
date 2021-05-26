@@ -136,3 +136,7 @@ C:\Users\ÍcaroSantos\Documents\Icaro\Estudos\Desenvolvedor.IO\Dominando EF Core
 C:\Users\ÍcaroSantos\Documents\Icaro\Estudos\Desenvolvedor.IO\Dominando EF Core\Curso\obj\Debug\net5.0\DominandoEFCore.genruntimeconfig.cache
 C:\Users\ÍcaroSantos\Documents\Icaro\Estudos\Desenvolvedor.IO\Dominando EF Core\Curso\bin\Debug\net5.0\Castle.Core.dll
 C:\Users\ÍcaroSantos\Documents\Icaro\Estudos\Desenvolvedor.IO\Dominando EF Core\Curso\bin\Debug\net5.0\Microsoft.EntityFrameworkCore.Proxies.dll
+F:\Estudos\Desenvolvedor.IO\EFCore Avancado\Curso\bin\Debug\net5.0\Castle.Core.dll
+F:\Estudos\Desenvolvedor.IO\EFCore Avancado\Curso\bin\Debug\net5.0\Humanizer.dll
+F:\Estudos\Desenvolvedor.IO\EFCore Avancado\Curso\bin\Debug\net5.0\Microsoft.EntityFrameworkCore.Design.dll
+F:\Estudos\Desenvolvedor.IO\EFCore Avancado\Curso\bin\Debug\net5.0\Microsoft.EntityFrameworkCore.Proxies.dll

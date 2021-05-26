@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Data.Common;
+using System.Data;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +9,214 @@ namespace DominandoEFCore
     {
         static void Main(string[] args)
         {
-            CarregamentoLento();
+            ConsultaViaProcedure();
+        }
+        #region Terceira Parte do Curso - StoredProcedures
+        static void ConsultaViaProcedure()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+
+            var dep = "Departamento";
+
+            var departamentos = 
+            db.Departamentos
+            //.FromSqlRaw("execute GetDepartamentos @p0", "Departamento")
+            .FromSqlInterpolated($"execute GetDepartamentos {dep}")
+            .ToList();
+
+            foreach (var departamento in departamentos)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;  
+                Console.WriteLine($"Descrição: {departamento.Descricao}");
+            }
         }
 
+        static void CriarStoredProcedureDeConsulta()
+        {
+            var criarDepartamento = @"
+            CREATE OR ALTER PROCEDURE GetDepartamentos
+            @Descricao VARCHAR(50)
+            AS
+            BEGIN 
+                SELECT * FROM Departamentos WHERE Descricao LIKE @Descricao + '%'
+            END
+            ";
+
+            using var db = new Curso.Data.ApplicationContext();
+
+            db.Database.ExecuteSqlRaw(criarDepartamento);
+        }
+
+        static void InserirDadosViaProcedure()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            db.Database.ExecuteSqlRaw("execute CriarDepartamento @p0, @p1", "Departamento via Proc", false);
+        }
+
+        static void CriarStoredProcedure()
+        {
+            var criarDepartamento = @"
+            CREATE OR ALTER PROCEDURE CriarDepartamento
+            @Descricao VARCHAR(50),
+            @Ativo BIT
+            AS
+            BEGIN 
+                INSERT INTO
+                    Departamentos(Descricao, Ativo, Excluido)
+                VALUES (@Descricao, @Ativo, 0)
+            END
+            ";
+
+            using var db = new Curso.Data.ApplicationContext();
+
+            db.Database.ExecuteSqlRaw(criarDepartamento);
+        }
+        #endregion
+
         #region Segunda Parte do Curso - Consultas
+        static void DivisaoDeConsulta()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            Setup(db);
+
+            var departamentos = db.Departamentos
+            .Include(p => p.Funcionarios)
+            .Where(p => p.Id < 3)
+            //.AsSplitQuery()
+            .AsSingleQuery()
+            .ToList();
+
+            foreach (var departamento in departamentos)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;  
+                Console.WriteLine($"Descrição: {departamento.Descricao}");
+
+                foreach (var funcionario in departamento.Funcionarios)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;  
+                    Console.WriteLine($"\t Nome: {funcionario}");
+                }
+            }
+        }
+
+        static void EntendendoConsulta_1ToN_Nto1()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            Setup(db);
+
+            var funcionarios = db.Funcionarios
+            .Include(p => p.Departamento)
+            .ToList();
+
+            foreach (var funcionario in funcionarios)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;  
+                Console.WriteLine($"\t Nome: {funcionario.Nome} / Departamento: {funcionario.Departamento.Descricao}");
+            }
+        }
+
+        static void ConsultaCoTag()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            Setup(db);
+
+            var departamentos = db.Departamentos
+            .TagWith("Estou enviando um comentário para o servidor")
+            .ToList();
+
+            foreach (var departamento in departamentos)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;  
+                Console.WriteLine($"Descrição: {departamento.Descricao}");
+            }
+        }
+
+        static void ConsultaInterpolada()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            Setup(db);
+
+            var id = 1;
+            var departamentos = db.Departamentos
+            .FromSqlInterpolated($"SELECT * FROM Departamentos WITH(NOLOCK) WHERE Id>{id}")
+            .ToList();
+
+            foreach (var departamento in departamentos)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;  
+                Console.WriteLine($"Descrição: {departamento.Descricao}");
+            }
+        }
+
+        static void ConsultaParametrizada()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            Setup(db);
+
+            var id = 0;
+            var departamentos = db.Departamentos
+            .FromSqlRaw("SELECT * FROM Departamentos WITH(NOLOCK) WHERE Id > {0}", id)
+            .Where(p => !p.Excluido)
+            .ToList();
+
+            foreach (var departamento in departamentos)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;  
+                Console.WriteLine($"Descrição: {departamento.Descricao}");
+            }
+        }
+
+        static void ConsultaProjetada()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            Setup(db);
+
+            var departamentos = db.Departamentos.Where(p => p.Id > 0)
+            .Select(p => new { p.Descricao, Funcionarios = p.Funcionarios.Select(f => f.Nome) })
+            .ToList();
+
+            foreach (var departamento in departamentos)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;  
+                Console.WriteLine($"Descrição: {departamento.Descricao}");
+
+                foreach (var funcionario in departamento.Funcionarios)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;  
+                    Console.WriteLine($"\t Nome: {funcionario}");
+                }
+            }
+        }
+
+        static void IgnoreFiltroGlobal()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            Setup(db);
+
+            var departamentos = db.Departamentos.IgnoreQueryFilters().Where(p => p.Id > 0).ToList();
+
+            foreach (var departamento in departamentos)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;  
+                //Console.BackgroundColor = ConsoleColor.DarkBlue;  
+                Console.WriteLine($"Descrição: {departamento.Descricao} \t Excluido: {departamento.Excluido}");
+            }
+        }
+
+        static void FiltroGlobal()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            Setup(db);
+
+            var departamentos = db.Departamentos.Where(p => p.Id > 0).ToList();
+
+            foreach (var departamento in departamentos)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;  
+                //Console.BackgroundColor = ConsoleColor.DarkBlue;  
+                Console.WriteLine($"Descrição: {departamento.Descricao} \t Excluido: {departamento.Excluido}");
+            }
+        }
 
         static void Setup(Curso.Data.ApplicationContext db)
         {
@@ -61,7 +265,6 @@ namespace DominandoEFCore
         }
 
         #endregion
-
 
         #region Primeira Parte do Curso - Funções DB
         static void CarregamentoLento()

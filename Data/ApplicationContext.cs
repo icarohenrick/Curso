@@ -17,10 +17,17 @@ namespace Curso.Data
             const string strConnection = "Data Source=(localdb)\\mssqllocaldb; Initial Catalog=CursoDEVIO-02; Integrated Security=true; pooling=true; MultipleActiveResultSets=true;";
 
             optionsBuilder
+                //.UseSqlServer(strConnection, p=> p.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
                 .UseSqlServer(strConnection)
                 .EnableSensitiveDataLogging()
                 //.UseLazyLoadingProxies()
                 .LogTo(Console.WriteLine, LogLevel.Information);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            //Filtro Global
+            //modelBuilder.Entity<Departamento>().HasQueryFilter(p => !p.Excluido);
         }
     }
 }
