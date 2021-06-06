@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace DominandoEFCore.Migrations
+namespace DominandoEFCore.Migrations_BPK
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20210521171145_RG")]
-    partial class RG
+    [Migration("20210521165808_initial")]
+    partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -52,9 +52,6 @@ namespace DominandoEFCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Nome")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RG")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

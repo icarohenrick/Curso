@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace DominandoEFCore.Migrations
+namespace DominandoEFCore.Migrations_BPK
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20210521165808_initial")]
-    partial class initial
+    [Migration("20210606205048_TestePropagacaoDados")]
+    partial class TestePropagacaoDados
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -33,9 +33,39 @@ namespace DominandoEFCore.Migrations
                     b.Property<string>("Descricao")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("Excluido")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.ToTable("Departamentos");
+                });
+
+            modelBuilder.Entity("Curso.Domain.Estado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .UseIdentityColumn();
+
+                    b.Property<string>("Nome")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Estados");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nome = "São Paulo"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nome = "Minas Gerais"
+                        });
                 });
 
             modelBuilder.Entity("Curso.Domain.Funcionario", b =>
@@ -51,7 +81,13 @@ namespace DominandoEFCore.Migrations
                     b.Property<int>("DepartamentoId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Excluido")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Nome")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RG")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

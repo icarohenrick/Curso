@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace DominandoEFCore.Migrations
+namespace DominandoEFCore.Migrations_BPK
 {
     public partial class RG : Migration
     {
