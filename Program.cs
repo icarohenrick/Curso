@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Linq;
+using Curso.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace DominandoEFCore
@@ -9,8 +10,73 @@ namespace DominandoEFCore
     {
         static void Main(string[] args)
         {
-            ConsultaViaProcedure();
+            Collations();
         }
+        
+        #region Quinta Parte do Curso - Modelo de Dados
+        static void Collations()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
+        }
+        #endregion
+
+        #region Quarta Parte do Curso - Infraestrutura
+        static void ExecutarEstrategiaResiliencia()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+
+            var strategy = db.Database.CreateExecutionStrategy();
+
+            strategy.Execute(() => {
+                using var transaction = db.Database.BeginTransaction();
+
+                db.Departamentos.Add(new Departamento { Descricao = "Transacao" });
+                db.SaveChanges();
+
+                transaction.Commit();
+            });
+        }
+        static void TempoComandoGeral()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            db.Database.SetCommandTimeout(10);
+            db.Database.ExecuteSqlRaw("waitfor delay '00:00:07'; SELECT 1");
+        }
+        static void HabilitandoBatchSize()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
+
+            for (int i = 0; i < 50; i++)
+            {
+                db.Departamentos.Add(new Departamento
+                {
+                    Descricao = $"Departamento {i}" 
+                });
+            }
+            
+            db.SaveChanges();
+        }
+
+        static void DadosSensiveis()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+
+            var descricao = "Departamento";
+            var departamentos = db.Departamentos.Where(p => p.Descricao == descricao).ToArray();
+        }
+
+        static void ConsultarDepartamentos()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+
+            var departamentos = db.Departamentos.Where(p => p.Id > 0).ToArray();
+        }
+        #endregion
+
         #region Terceira Parte do Curso - StoredProcedures
         static void ConsultaViaProcedure()
         {

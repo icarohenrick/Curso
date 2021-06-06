@@ -7587,25 +7587,25 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\icaro\\.nuget\\packages\\": {},
+    "C:\\Users\\ÍcaroSantos\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {},
     "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "F:\\Estudos\\Desenvolvedor.IO\\EFCore Avancado\\Curso\\DominandoEFCore.csproj",
+      "projectUniqueName": "C:\\Users\\ÍcaroSantos\\Documents\\Icaro\\Estudos\\Desenvolvedor.IO\\Dominando EF Core\\Curso\\DominandoEFCore.csproj",
       "projectName": "DominandoEFCore",
-      "projectPath": "F:\\Estudos\\Desenvolvedor.IO\\EFCore Avancado\\Curso\\DominandoEFCore.csproj",
-      "packagesPath": "C:\\Users\\icaro\\.nuget\\packages\\",
-      "outputPath": "F:\\Estudos\\Desenvolvedor.IO\\EFCore Avancado\\Curso\\obj\\",
+      "projectPath": "C:\\Users\\ÍcaroSantos\\Documents\\Icaro\\Estudos\\Desenvolvedor.IO\\Dominando EF Core\\Curso\\DominandoEFCore.csproj",
+      "packagesPath": "C:\\Users\\ÍcaroSantos\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\ÍcaroSantos\\Documents\\Icaro\\Estudos\\Desenvolvedor.IO\\Dominando EF Core\\Curso\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
         "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
       ],
       "configFilePaths": [
-        "C:\\Users\\icaro\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\ÍcaroSantos\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
@@ -7667,7 +7667,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.203\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.202\\RuntimeIdentifierGraph.json"
       }
     }
   }
