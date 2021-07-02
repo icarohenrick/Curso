@@ -7,17 +7,42 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.IO;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Curso.Configurations;
+using System.Reflection;
+using System.Collections.Generic;
+using Curso.Funcoes;
+using System.Linq;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
 namespace Curso.Data
 {
     public class ApplicationContext : DbContext
     {
-        private readonly StreamWriter _writer = new StreamWriter("Meu_log_do_ef_core.txt", append:true);
+
+        //public DbSet<Livro> Livros { get; set; } 
+        //public DbSet<Funcao> Funcoes { get; set; }
+
+        #region Parte Anetior ao EF Functions
+        //private readonly StreamWriter _writer = new StreamWriter("Meu_log_do_ef_core.txt", append:true);
 
         public DbSet<Departamento> Departamentos { get; set; }
         public DbSet<Funcionario> Funcionarios { get; set; }
-        public DbSet<Estado> Estados { get; set; }
-        public DbSet<Conversor> Conversores { get; set; }
+        // public DbSet<Estado> Estados { get; set; }
+        // public DbSet<Conversor> Conversores { get; set; }
+        // public DbSet<Cliente> Clientes { get; set; }
+        // public DbSet<Ator> Atores { get; set; }
+        // public DbSet<Filme> Filmes { get; set; }
+        // public DbSet<Documento> Documentos { get; set; }
+
+        // public DbSet<Pessoa> Pessoas { get; set; }
+        // public DbSet<Instrutor> Instrutores { get; set; }
+        // public DbSet<Aluno> Alunos { get; set; }
+
+        // public DbSet<Dictionary<string, object>> Configuracoes => Set<Dictionary<string, object>>("Configuracoes");
+
+        // public DbSet<Attributo> Attributos { get; set; }
+
+        #endregion
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -25,6 +50,12 @@ namespace Curso.Data
 
             optionsBuilder
                 .UseSqlServer(strConnection)
+                .LogTo(Console.WriteLine, LogLevel.Information)
+                .EnableSensitiveDataLogging()
+                //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTrackingWithIdentityResolution)
+                // .AddInterceptors(new Interceptadores.InterceptadoresDeComandos())
+                // .AddInterceptors(new Interceptadores.InterceptadoresDeConexao())
+                // .AddInterceptors(new Interceptadores.InterceptadoresPersistencia())
                 //.UseSqlServer(strConnection, p=> p.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
                 // .UseSqlServer(strConnection, o => o
                 //                             .MaxBatchSize(100)
@@ -33,7 +64,7 @@ namespace Curso.Data
                 //.UseSqlServer(strConnection)
                 //.EnableSensitiveDataLogging()
                 //.UseLazyLoadingProxies()
-                .LogTo(Console.WriteLine, LogLevel.Information)
+                
                 /*.LogTo(
                     Console.WriteLine, 
                     new [] { CoreEventId.ContextInitialized, RelationalEventId.CommandExecuted },
@@ -44,9 +75,16 @@ namespace Curso.Data
                 //     LogLevel.Information,
                 //     DbContextLoggerOptions.LocalTime | DbContextLoggerOptions.SingleLine )
                 //.EnableDetailedErrors(true)
-                .EnableSensitiveDataLogging()
                 ;
         }
+
+        #region UDF
+        // [DbFunction(Name = "LEFT", IsBuiltIn = true)]
+        // public static string Left(string dados, int quantidade)
+        // {
+        //     throw new NotImplementedException();
+        // }
+        #endregion
 
         #region Log
         // public override void Dispose()
@@ -112,29 +150,131 @@ namespace Curso.Data
         #endregion
 
         #region Esquemas e Conversores
+        // protected override void OnModelCreating(ModelBuilder modelBuilder)
+        // {
+        //     // modelBuilder.HasDefaultSchema("cadastros");
+
+        //     // modelBuilder.Entity<Estado>().ToTable("Estados", "SegundoEsquema");
+
+        //     var conversao = new ValueConverter<Versao, string>(
+        //         p => p.ToString(), p => (Versao)Enum.Parse(typeof(Versao), p)
+        //     );
+
+        //      var conversao1 = new EnumToStringConverter<Versao>();
+
+        //     modelBuilder.Entity<Conversor>()
+        //         .Property(p => p.Versao)
+        //         .HasConversion(conversao1);
+        //         //.HasConversion(conversao);
+        //         //.HasConversion(p => p.ToString(), p => (Versao)Enum.Parse(typeof(Versao), p));
+        //         //.HasConversion<string>();
+
+        //     modelBuilder.Entity<Conversor>()
+        //         .Property(p => p.Status)
+        //         .HasConversion(new Curso.Conversores.ConversorCustomizado());
+        // }
+        #endregion
+
+        #region Properties Shadows
+        // protected override void OnModelCreating(ModelBuilder modelBuilder)
+        // {
+        //     modelBuilder.Entity<Departamento>()
+        //         .Property<DateTime>("UltimaAtualizacao");
+        // }
+        #endregion
+
+        #region Owned Types
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // modelBuilder.HasDefaultSchema("cadastros");
+            #region UDF
 
-            // modelBuilder.Entity<Estado>().ToTable("Estados", "SegundoEsquema");
+            //Curso.Funcoes.MinhasFuncoes.RegistrarFuncoes(modelBuilder);
 
-            var conversao = new ValueConverter<Versao, string>(
-                p => p.ToString(), p => (Versao)Enum.Parse(typeof(Versao), p)
-            );
+            // modelBuilder.HasDbFunction(
+            //     typeof(MinhasFuncoes)
+            //     .GetRuntimeMethod("Left", new[] {typeof(string), typeof(int) }))
+            //     .HasName("LEFT")
+            //     .IsBuiltIn();
 
-             var conversao1 = new EnumToStringConverter<Versao>();
+            modelBuilder
+                .HasDbFunction(_minhaFuncao)
+                .HasName("LEFT")
+                .IsBuiltIn();
 
-            modelBuilder.Entity<Conversor>()
-                .Property(p => p.Versao)
-                .HasConversion(conversao1);
-                //.HasConversion(conversao);
-                //.HasConversion(p => p.ToString(), p => (Versao)Enum.Parse(typeof(Versao), p));
-                //.HasConversion<string>();
+            modelBuilder
+                .HasDbFunction(_letrasMaiusculas)
+                .HasName("ConverterParaLetrasMaiusculas")
+                .HasSchema("dbo");
 
-            modelBuilder.Entity<Conversor>()
-                .Property(p => p.Status)
-                .HasConversion(new Curso.Conversores.ConversorCustomizado());
+            modelBuilder
+                .HasDbFunction(_dateDiff)
+                .HasName("DATEDIFF")
+                .HasTranslation(p =>
+                {
+                    var argumentos = p.ToList();
+
+                    var constante = (SqlConstantExpression)argumentos[0];
+                    argumentos[0] = new  SqlFragmentExpression(constante.Value.ToString());
+
+                    return new SqlFunctionExpression(
+                        "DATEDIFF", //Função
+                        argumentos, //Parametros mapeados
+                        false, //Função Retorna valor nulo
+                        new[] {false, false, false}, //Parametros podem ser nulos
+                        typeof(int), // Tipo de Retorno
+                        null); //Algum mapeamento adicional?
+                })
+                .IsBuiltIn();
+
+            #endregion
+            // modelBuilder.Entity<Cliente>(p => 
+            // {
+            //     p.OwnsOne(x => x.Endereco, end=> 
+            //     {
+            //         end.Property(p => p.Bairro).HasColumnName("Bairro");
+
+            //         end.ToTable("Enderecos");
+            //     });
+            // });
+
+            //Aplicação um a um
+            //modelBuilder.ApplyConfiguration(new ClienteConfiguration());
+            
+            //From Assembly Exmeplo 01
+            //modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            //From Assembly Exmeplo 02
+            // modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationContext).Assembly);
+
+            // modelBuilder.SharedTypeEntity<Dictionary<string, object>>("Configuracoes", b => 
+            // {
+            //     b.Property<int>("Id");
+
+            //     b.Property<string>("Chave")
+            //         .HasColumnType("VARCHAR(40)")
+            //         .IsRequired();
+
+            //     b.Property<string>("Valor")
+            //         .HasColumnType("VARCHAR(255)")
+            //         .IsRequired();
+            // });
+        
+            // modelBuilder.Entity<Funcao>(conf =>
+            // {
+            //     conf.Property<string>("PropriedadeDeSombra")
+            //         .HasColumnType("VARCHAR(100)")
+            //         .HasDefaultValueSql("'Teste'");
+            // });
         }
         #endregion
+
+        private static MethodInfo _minhaFuncao = typeof(MinhasFuncoes)
+            .GetRuntimeMethod("Left", new[] {typeof(string), typeof(int) });
+
+        private static MethodInfo _letrasMaiusculas = typeof(MinhasFuncoes)
+            .GetRuntimeMethod(nameof(MinhasFuncoes.LetrasMaiusculas), new[] {typeof(string) });
+
+        private static MethodInfo _dateDiff = typeof(MinhasFuncoes)
+            .GetRuntimeMethod(nameof(MinhasFuncoes.DateDiff), new[] {typeof(string), typeof(DateTime), typeof(DateTime) });
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Data;
 using System.Linq;
+using System.Transactions;
 using Curso.Domain;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +10,808 @@ namespace DominandoEFCore
     {
         static void Main(string[] args)
         {
-            PropriedadesDeSombra();
+            //ConsultaProjetada();
+        }
+        #region Migrações
+
+        #endregion
+
+        #region Performance
+        /*        
+        static void ConsultaRastreada()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            var funcionarios = db.Funcionarios.Include(p => p.Departamento).ToList();
+        }
+        static void ConsultaNaoRastreada()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            var funcionarios = db.Funcionarios.AsNoTracking().Include(p => p.Departamento).ToList();
         }
         
+        static void ConsultaComResolucaoDeIdentidade()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+
+            var funcionarios = db.Funcionarios.AsNoTrackingWithIdentityResolution()
+                .Include(p => p.Departamento).ToList();
+        }
+
+        static void ConsultaCustomizada()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+
+            db.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.TrackAll;
+
+            var funcionarios = db.Funcionarios.Include(p => p.Departamento).ToList();
+        }
+
+        static void ConsultaProjetadaERastreada()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+
+            var departamento = db.Departamentos
+                .Include(p => p.Funcionarios)
+                .Select(p => new {
+                    Departamento = p,
+                    TotalFuncionarios = p.Funcionarios.Count()
+                }).ToList();
+
+                departamento[0].Departamento.Descricao = "Departamento Teste Atualizado";
+
+                db.SaveChanges();
+        }
+
+        static void ConsultaProjetada()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+
+            //var departamentos = db.Departamentos.ToArray(); //360 MB
+
+            var departamentos = db.Departamentos.Select(x => x.Descricao).ToArray(); // 55 MB
+            
+            var memoria = (System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024 + " MB");
+
+            Console.WriteLine(memoria);
+        }
+
+        static void Inserir_200_Departamentos_Com_1MB()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
+
+            var random = new Random();
+
+            db.Departamentos.AddRange(Enumerable.Range(1,200).Select(p => 
+                new Departamento
+                {
+                    Descricao = "Departamento Teste",
+                    Image = getBytes()
+                }));
+            
+             db.SaveChanges();
+            
+            byte[] getBytes()
+            {
+                var buffer = new byte[1024 * 1024];
+                random.NextBytes(buffer);
+
+                return buffer;
+            }
+        }
+
+        static void Setup()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
+
+            _ = db.Departamentos.Add(new Departamento
+            {
+                Descricao = "Departamento Teste",
+                Ativo = true,
+                Funcionarios = Enumerable.Range(1, 100).Select(p => new Funcionario
+                {
+                    CPF = p.ToString().PadLeft(11, '0'),
+                    Nome = $"Funcionario {p}",
+                    RG = p.ToString()
+                }).ToList()
+            });
+
+            db.SaveChanges();
+        }
+        */
+        #endregion
+
+        #region UDF
+        /*static void DateDIFF()
+        {
+            CadastrarLivro();
+
+            using var db = new Curso.Data.ApplicationContext();
+
+            //var resultado = db.Livros.Select(p => EF.Functions.DateDiffDay(p.CadastradoEm, DateTime.Now));
+
+            var resultado = db.Livros.Select(p => Curso.Funcoes.MinhasFuncoes.DateDiff("DAY", p.CadastradoEm, DateTime.Now));
+
+            foreach (var diff in resultado)
+            {
+                Console.WriteLine(diff);
+            }
+        }
+
+        static void FuncaoDefinidaPeloUsuario()
+        {
+            CadastrarLivro();
+
+            using var db = new Curso.Data.ApplicationContext();
+
+            db.Database.ExecuteSqlRaw(@"
+                CREATE FUNCTION ConverterParaLetrasMaiusculas(@dados VARCHAR(100))
+                RETURNS VARCHAR(100)
+                BEGIN
+                    RETURN UPPER(@dados)
+                END
+            ");
+
+            var resultado = db.Livros.Select(p => Curso.Funcoes.MinhasFuncoes.LetrasMaiusculas(p.Titulo));
+
+            foreach (var parteTitulo in resultado)
+            {
+                Console.WriteLine(parteTitulo);
+            }
+        }
+
+        static void FuncaoLEFT()
+        {
+            CadastrarLivro();
+            using var db = new Curso.Data.ApplicationContext();
+
+            //var resultado = db.Livros.Select(p => Curso.Data.ApplicationContext.Left(p.Titulo, 10));
+            var resultado = db.Livros.Select(p => Curso.Funcoes.MinhasFuncoes.Left(p.Titulo, 10));
+
+            foreach (var parteTitulo in resultado)
+            {
+                Console.WriteLine(parteTitulo);
+            }
+        }*/
+        #endregion
+
+        #region transações
+        /*static void TransactionScope()
+        {
+            CadastrarLivro();
+
+            var transactionOptions = new TransactionOptions
+            {
+                IsolationLevel = IsolationLevel.ReadCommitted,
+            };
+
+            using (var scope = new TransactionScope(TransactionScopeOption.Required, transactionOptions))
+            {
+                ConsultarAtualizar();
+                CadastrarLivroEnterprice();
+                CadastrarLivroDominandoEFCore();
+
+                scope.Complete();
+            }
+        }
+
+        static void ConsultarAtualizar()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                var livro = db.Livros.FirstOrDefault(p => p.Id ==1);
+                    livro.Autor = "Icaro Santos";
+                    db.SaveChanges();
+            }
+        }
+
+        static void CadastrarLivroEnterprice()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Livros.Add(
+                    new Livro
+                    {
+                        Titulo = "ASP.NET CORE Enterprise Applications",
+                        Autor = "Patrizia"
+                    }
+                );
+                db.SaveChanges();
+            }
+        }
+
+        static void CadastrarLivroDominandoEFCore()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Livros.Add(
+                    new Livro
+                    {
+                        Titulo = "Dominando o Entity Framework Core",
+                        Autor = "Icaro Santos"
+                    }
+                );
+                db.SaveChanges();
+            }
+        }
+
+        static void SalvarPontoTransacao()
+        {
+            CadastrarLivro();
+
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                using var transacao = db.Database.BeginTransaction();
+
+                try
+                {
+                    var livro = db.Livros.FirstOrDefault(p => p.Id ==1);
+                    livro.Autor = "Icaro Santos";
+                    db.SaveChanges();
+
+                    transacao.CreateSavepoint("desfazer_apenas_insercao");
+
+                    db.Livros.Add(
+                        new Livro
+                        {
+                            Titulo = "ASP.NET CORE Enterprise Applications",
+                            Autor = "Icaro Henrique"
+                        }
+                    );
+                    db.SaveChanges();
+
+                    db.Livros.Add(
+                        new Livro
+                        {
+                            Titulo = "Dominando o Entity Framework Core",
+                            Autor = "Icaro Henrique".PadLeft(16, '*')
+                        }
+                    );
+                    db.SaveChanges();
+
+                    transacao.Commit();
+                }
+                catch(DbUpdateException e)
+                {
+                    transacao.RollbackToSavepoint("desfazer_apenas_insercao");
+
+                    if(e.Entries.Count(p => p.State == EntityState.Added) == e.Entries.Count)
+                    {
+                        transacao.Commit();
+                    }
+                }
+            }
+        }
+
+        static void ReverterTransacao()
+        {
+            CadastrarLivro();
+
+            using(var db = new Curso.Data.ApplicationContext())
+            {
+                var transacao = db.Database.BeginTransaction();
+
+                try
+                {
+                    var livro = db.Livros.FirstOrDefault(p => p.Id == 1);
+                    livro.Autor = "Icaro Santos";
+
+                    db.SaveChanges();
+
+                    Console.ReadKey();
+
+                    db.Livros.Add(
+                        new Livro 
+                        {
+                            Titulo = "Dominando o Entity Framework Core",
+                            Autor = "Icaro Santos".PadLeft(16, '*')
+                        }
+                    );
+
+                    db.SaveChanges();
+                }
+                catch
+                {
+                    transacao.Rollback();
+                }
+
+                transacao.Commit();
+            }
+        }
+
+        static void GerenciandoTransacaoManualmente()
+        {
+            CadastrarLivro();
+
+            using(var db = new Curso.Data.ApplicationContext())
+            {
+                var transacao = db.Database.BeginTransaction();
+
+                var livro = db.Livros.FirstOrDefault(p => p.Id == 1);
+                livro.Autor = "Icaro Santos";
+
+                db.SaveChanges();
+
+                Console.ReadKey();
+
+                db.Livros.Add(
+                    new Livro
+                    {
+                        Titulo = "Dominando o Entity Framework Core",
+                        Autor = "Icaro Santos"
+                    }
+                );
+
+                db.SaveChanges();
+
+                transacao.Commit();
+            }
+        }
+
+        static void ComportamentoPadrao()
+        {
+            CadastrarLivro();
+
+            using(var db = new Curso.Data.ApplicationContext())
+            {
+                var livro = db.Livros.FirstOrDefault(p => p.Id == 1);
+                livro.Autor = "Icaro Henrique";
+
+                db.Livros.Add(
+                    new Livro
+                    {
+                        Titulo = "Dominando o Entity Framework Core",
+                        Autor = "Patrizia Mastrodonato"
+                    }
+                );
+
+                db.SaveChanges();
+            }
+        }
+
+        static void CadastrarLivro()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+
+                db.Livros.Add(
+                    new Livro
+                    {
+                        Titulo = "Introdução ao Entity Framework Core",
+                        Autor = "Icaro",
+                        CadastradoEm = DateTime.Now.AddDays(-1)
+                    }
+                );
+
+                db.SaveChanges();
+            }
+        }*/
+        #endregion
+        
+        #region Interceptação
+        // static void TesteInterceptacaoSaveChanges()
+        // {
+        //     using(var db = new Curso.Data.ApplicationContext())
+        //     {
+        //         db.Database.EnsureDeleted();
+        //         db.Database.EnsureCreated();
+
+        //         db.Funcoes.Add(new Funcao
+        //         {
+        //             Descricao1 = "Teste"
+        //         });
+
+        //         db.SaveChanges();
+        //     }
+        // }
+
+        // static void TesteInterceptacao()
+        // {
+        //     using(var db = new Curso.Data.ApplicationContext())
+        //     {
+        //         var consulta = db.Funcoes
+        //             .TagWith("Use NOLOCK")
+        //             .FirstOrDefault();
+
+        //         Console.WriteLine($"Consulta: {consulta?.Descricao1}");
+        //     }
+        // }
+        #endregion
+
+        #region EF Funcions
+        // static void FuncaoCollate()
+        // {
+        //     using (var db = new Curso.Data.ApplicationContext())
+        //     {
+        //         var consulta1 = db.Funcoes
+        //             .FirstOrDefault(p => EF.Functions.Collate(p.Descricao1, "SQL_Latin1_General_CP1_CS_AS") == "tela");
+
+        //         var consulta2 = db.Funcoes
+        //             .FirstOrDefault(p => EF.Functions.Collate(p.Descricao1, "SQL_Latin1_General_CP1_CI_AS") == "tela");
+
+        //         Console.WriteLine($"Consulta1: {consulta1?.Descricao1}");
+        //         Console.WriteLine($"Consulta2: {consulta2?.Descricao1}");
+        //     }
+        // }
+
+        // static void FuncaoProperty()
+        // {
+        //     ApagarCriarBancoDeDados();
+
+        //     using (var db = new Curso.Data.ApplicationContext())
+        //     {
+        //          var resultado = db.Funcoes
+        //             //.AsNoTracking() //O Resultado não aparece se for descomentado devido a perda de referencia após a consulta
+        //             .FirstOrDefault(p => EF.Property<string>(p, "PropriedadeDeSombra") == "Teste");
+
+        //          var propriedadeDeSombra = db.Entry(resultado)
+        //             .Property<string>("PropriedadeDeSombra")
+        //             .CurrentValue;
+
+        //         Console.WriteLine("Resultdo:");
+        //         Console.WriteLine(propriedadeDeSombra);
+        //     }
+        // }
+
+        // static void FuncoesDataLength()
+        // {
+        //     using (var db = new Curso.Data.ApplicationContext())
+        //     {
+        //         var resultado = db.Funcoes.AsNoTracking()
+        //             .Select(p => new 
+        //             {
+        //                 TotalBytesCampoData = EF.Functions.DataLength(p.Data1),
+        //                 TotalBytes1 = EF.Functions.DataLength(p.Descricao1),
+        //                 TotalBytes2 = EF.Functions.DataLength(p.Descricao2),
+        //                 Total1 = p.Descricao1.Length,
+        //                 Total2 = p.Descricao2.Length
+
+        //             }).FirstOrDefault();
+
+        //         Console.WriteLine("Resultado:");
+        //         Console.WriteLine(resultado);
+        //     }
+        // }
+
+        // static void FuncoesLike()
+        // {
+        //     using (var db = new Curso.Data.ApplicationContext())
+        //     {
+        //         var script = db.Database.GenerateCreateScript();
+
+        //         Console.WriteLine(script);
+
+        //         var dados = db.Funcoes.AsNoTracking()
+        //             //.Where(p => EF.Functions.Like(p.Descricao1, "Bo%"))
+        //             .Where(p => EF.Functions.Like(p.Descricao1, "B[ao]%"))
+        //             .Select(p => p.Descricao1).ToArray();
+
+        //         foreach (var descricao in dados)
+        //         {
+        //             Console.WriteLine(descricao);
+        //         }
+        //     }
+        // }
+        
+        // static void FuncoesDeDatas()
+        // {
+        //     ApagarCriarBancoDeDados();
+
+        //     using (var db = new Curso.Data.ApplicationContext())
+        //     {
+        //         var script = db.Database.GenerateCreateScript();
+
+        //         Console.WriteLine(script);
+
+        //         var dados = db.Funcoes.AsNoTracking().Select(p => 
+        //         new 
+        //         {
+        //             Dias = EF.Functions.DateDiffDay(DateTime.Now, p.Data1),
+        //             Data = EF.Functions.DateFromParts(2021, 1, 2),
+        //             DataValida = EF.Functions.IsDate(p.Data2)
+        //         });
+
+        //         foreach (var f in dados)
+        //         {
+        //             Console.WriteLine(f);
+        //         }
+        //     }
+        // }
+
+        // static void ApagarCriarBancoDeDados()
+        // {
+        //     using var db = new Curso.Data.ApplicationContext();
+        //     db.Database.EnsureDeleted();
+        //     db.Database.EnsureCreated();
+
+        //     db.Funcoes.AddRange(
+        //         new Funcao
+        //         {
+        //             Data1 = DateTime.Now.AddDays(2),
+        //             Data2 = "2021-01-01",
+        //             Descricao1 = "Bala 1 ",
+        //             Descricao2 = "Bala 1 "
+        //         },
+        //         new Funcao
+        //         {
+        //             Data1 = DateTime.Now.AddDays(1),
+        //             Data2 = "XX21-01-01",
+        //             Descricao1 = "Bola 2",
+        //             Descricao2 = "Bola 2"
+        //         },
+        //         new Funcao
+        //         {
+        //             Data1 = DateTime.Now.AddDays(1),
+        //             Data2 = "XX21-01-01",
+        //             Descricao1 = "Tela",
+        //             Descricao2 = "Tela"
+        //         }
+        //     );
+
+        //     db.SaveChanges();
+        // }
+        #endregion
+
+        #region Materias Anteriores
+        /*
+        #region Sexta Parte do Curso - Data Annotations 
+        static void Atributos()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+
+                var script = db.Database.GenerateCreateScript();
+                Console.WriteLine(script);
+
+                db.Attributos.Add(new Attributo
+                {
+                    Descricao = "Exemplo",
+                    Observacao = "Observação"
+                });
+
+                db.SaveChanges();
+            }
+        }
+        #endregion
+        
         #region Quinta Parte do Curso - Modelo de Dados
+        static void PacotesDePropriedades()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+
+                var configuration = new Dictionary<string, object>
+                {
+                    ["Chave"] = "SenhaBancoDeDados",
+                    ["Valor"] = Guid.NewGuid().ToString()
+                };
+
+                db.Configuracoes.Add(configuration);
+                db.SaveChanges();
+
+                var configuracoes = db.Configuracoes.AsNoTracking().Where(p => p["Chave"].ToString() == "SenhaBancoDeDados").ToArray();
+
+                foreach (var dic in configuracoes)
+                {
+                    Console.WriteLine($"Chave {dic["Chave"]} - Valor: {dic["Valor"]}");
+                }
+            }
+        }
+        static void ExemploTPH()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+
+                var pessoa = new Pessoa { Nome = "Patrizia" };
+                var instrutor = new Instrutor { Nome = "Icaro Henrique", Tecnologia=".NET", Desde=DateTime.Now };
+                var aluno = new Aluno { Nome = "Bruce Dog", Idade=7, DataContrato = DateTime.Now.AddDays(-1) };
+
+                db.AddRange(pessoa, instrutor, aluno);
+                db.SaveChanges();
+
+                var pessoas = db.Pessoas.AsNoTracking().ToArray();
+                var instrutores = db.Instrutores.AsNoTracking().ToArray();
+                //var alunos = db.Alunos.AsNoTracking().ToArray();
+                var alunos = db.Pessoas.OfType<Aluno>().AsNoTracking().ToArray();
+
+                Console.WriteLine($"Pessoas *********");
+                foreach (var p in pessoas)
+                {
+                    Console.WriteLine($"Id: {p.Id} -> {p.Nome}");
+                }
+                Console.WriteLine($"Instrutores *********");
+                foreach (var p in instrutores)
+                {
+                    Console.WriteLine($"Id: {p.Id} -> {p.Nome}, Tecnologia: {p.Tecnologia}, Desde: {p.Desde}");
+                }
+                Console.WriteLine($"Alunos *********");
+                foreach (var p in alunos)
+                {
+                    Console.WriteLine($"Id: {p.Id} -> {p.Nome}, Idade: {p.Idade}, Data do Contrato: {p.DataContrato}");
+                }
+            }
+        }
+
+        static void CampoDeApoio()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+
+                var documento = new Documento();
+                documento.SetCPF("432.761.988-11");
+
+                db.Documentos.Add(documento);
+                db.SaveChanges();
+
+                foreach (var doc in db.Documentos.AsNoTracking())
+                {
+                    //Console.WriteLine($"CPF -> {doc.CPF}");
+                    Console.WriteLine($"CPF -> {doc.GetCPF()}");
+                }
+            }
+        }
+        static void RelacionamentoMuitosParaMuitos()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+                
+                var ator1 = new Ator { Nome = "Icaro" };
+                var ator2 = new Ator { Nome = "Patrizia" };
+                var ator3 = new Ator { Nome = "Bruce" };
+
+                var filme1 = new Filme { Descricao = "Piratas do Caribe" };
+                var filme2 = new Filme { Descricao = "Batman - O Retorno" };
+                var filme3 = new Filme { Descricao = "Legalmente Loira" };
+
+                ator1.Filmes.Add(filme1);
+                ator1.Filmes.Add(filme2);
+                ator2.Filmes.Add(filme1);
+
+                filme3.Atores.Add(ator1);
+                filme3.Atores.Add(ator2);
+                filme3.Atores.Add(ator3);
+
+                db.AddRange(ator1, ator2, filme3);
+
+                db.SaveChanges();
+
+                foreach (var ator in db.Atores.Include(p => p.Filmes))
+                {
+                    Console.WriteLine($"Ator: {ator.Nome}");
+
+                    foreach (var filme in ator.Filmes)
+                    {
+                        Console.WriteLine($"\tFilme: {filme.Descricao}");
+                    }
+                }
+            }
+        }
+        static void Relacionamento1ParaMuitos()
+        {
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+                
+                var estado = new Estado
+                {
+                    Nome = "São Paulo",
+                    Governador = new Governador { Nome = "João Doria" }
+                };
+
+                estado.Cidades.Add(new Cidade { Nome = "Barueri"});
+
+                db.Estados.Add(estado);
+
+                db.SaveChanges();
+            }
+
+            using (var db = new Curso.Data.ApplicationContext())
+            {
+                var estados = db.Estados.ToList();
+
+                estados[0].Cidades.Add(new Cidade { Nome = "Osasco"} );
+
+                db.SaveChanges();
+
+                foreach (var est in db.Estados.Include(p => p.Cidades).AsNoTracking())
+                {
+                    Console.WriteLine($"Estado: {est.Nome}, Governador: {est.Governador.Nome}");
+
+                    foreach (var cidade in est.Cidades)
+                    {
+                        Console.WriteLine($"\t Cidade: {cidade.Nome}");
+                    }
+                }
+            }
+        }
+        static void Relacionamento1Para1()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
+            
+            var estado = new Estado
+            {
+                Nome = "São Paulo",
+                Governador = new Governador { Nome = "João Doria" }
+            };
+
+            db.Estados.Add(estado);
+
+            db.SaveChanges();
+
+            var estados = db.Estados.AsNoTracking().ToList();
+
+            estados.ForEach(est => 
+            {
+                Console.WriteLine($"Estado: {est.Nome}, Governador: {est.Governador.Nome}");
+            });
+        }
+        static void TiposDePropriedades()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
+            
+            var cliente = new Cliente
+            {
+                Nome = "Bruce Wayne",
+                Telefone = "(11) 99271-2159",
+                Endereco = new Endereco { Bairro = "Centro", Cidade = "Gotham City" }
+            };
+
+            db.Clientes.Add(cliente);
+
+            db.SaveChanges();
+
+            var clientes = db.Clientes.AsNoTracking().ToList();
+
+            var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
+
+            clientes.ForEach(cli => 
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(cli, options);
+
+                Console.WriteLine(json);
+            });
+        }
+
+        static void TrabalhandoPropriedadesDeSombra()
+        {
+            using var db = new Curso.Data.ApplicationContext();
+            /*db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
+            
+            var departamento = new Departamento
+            {
+                Descricao = "Departamento Propriedade de Sombra"
+            };
+
+            db.Departamentos.Add(departamento);
+
+            db.Entry(departamento).Property("UltimaAtualizacao").CurrentValue = DateTime.Now;
+
+            db.SaveChanges();
+
+            var departamentos = db.Departamentos.Where(p => EF.Property<DateTime>(p, "UltimaAtualizacao") < DateTime.Now).ToArray();
+        }
+
         static void PropriedadesDeSombra()
         {
             using var db = new Curso.Data.ApplicationContext();
@@ -675,5 +1473,7 @@ namespace DominandoEFCore
             //databaseCreator.CreateTables();
         }
         #endregion
+    */
+    #endregion
     }
 }
